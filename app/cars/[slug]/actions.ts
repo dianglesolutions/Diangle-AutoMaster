@@ -1,13 +1,20 @@
 "use server";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getSqlPool, sql } from "@/lib/azure/sql";
 
 export async function submitEnquiry(formData: FormData) {
-  const supabase = await createClient();
-  if (!supabase) redirect("/login?error=configuration");
   const slug = String(formData.get("slug") ?? "");
-  const { data: vehicle } = await supabase.from("vehicles").select("id").eq("slug", slug).maybeSingle();
-  const { error } = await supabase.from("enquiries").insert({ vehicle_id: vehicle?.id ?? null, customer_name: String(formData.get("name") ?? ""), email: String(formData.get("email") ?? ""), phone: String(formData.get("phone") ?? ""), message: String(formData.get("message") ?? "") });
-  if (error) redirect(`/cars/${slug}?error=send`);
+  const pool = await getSqlPool();
+  if (!pool) redirect(`/cars/${slug}?error=database`);
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+  const message = String(formData.get("message") ?? "").trim();
+  if (name.length < 2 || name.length > 120 || email.length < 3 || email.length > 320 || phone.length > 80 || message.length < 5 || message.length > 4000) redirect(`/cars/${slug}?error=send`);
+  try {
+    await pool.request().input("slug", sql.NVarChar(180), slug).input("name", sql.NVarChar(120), name)
+      .input("email", sql.NVarChar(320), email).input("phone", sql.NVarChar(80), phone).input("message", sql.NVarChar(4000), message)
+      .query("INSERT INTO dbo.Enquiries (vehicle_id, customer_name, email, phone, message) SELECT id, @name, @email, @phone, @message FROM dbo.Vehicles WHERE slug = @slug AND status = 'available'; IF @@ROWCOUNT = 0 BEGIN; THROW 50001, 'Vehicle is no longer available.', 1; END;");
+  } catch { redirect(`/cars/${slug}?error=send`); }
   redirect(`/cars/${slug}?sent=1`);
 }
