@@ -24,7 +24,19 @@ export async function createVehicle(formData: FormData) {
     if (!extension || file.size > 8 * 1024 * 1024) redirect("/admin?error=image");
     const path = `${crypto.randomUUID()}.${extension}`;
     try { imageUrl = await uploadVehicleImage(path, Buffer.from(await file.arrayBuffer()), file.type); }
-    catch { redirect("/admin?error=upload"); }
+    catch (error) {
+      const details = error && typeof error === "object" ? error as {
+        name?: unknown; message?: unknown; code?: unknown; statusCode?: unknown; requestId?: unknown;
+      } : {};
+      console.error("[vehicle-image-upload] Azure Blob upload failed", {
+        name: details.name,
+        message: details.message,
+        code: details.code,
+        statusCode: details.statusCode,
+        requestId: details.requestId,
+      });
+      redirect("/admin?error=upload");
+    }
   }
   const slug = `${slugify(`${make}-${model}-${year}`)}-${crypto.randomUUID().slice(0, 6)}`;
   try {
