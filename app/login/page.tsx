@@ -1,0 +1,10 @@
+import type { Metadata } from "next";
+import { LockKeyhole, ArrowLeft, ArrowUpRight } from "lucide-react";
+import Link from "next/link";
+import { signIn } from "@/app/login/actions";
+
+export const metadata: Metadata = { title: "Sign in" };
+export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
+  const params = await searchParams;
+  return <main className="auth-page"><div className="auth-art"><div className="auth-photo"/><div className="auth-overline">AUTO<span>MASTER</span><i>.</i></div><div className="auth-quote"><span className="eyebrow eyebrow-light"><span className="eyebrow-dot"/> THE ROAD AHEAD</span><h1>Better journeys<br/>start <em>here.</em></h1><p>Welcome to your AutoMaster workspace.</p></div><span className="auth-art-caption">EXCEPTIONAL CARS. EXCEPTIONAL SERVICE.</span></div><section className="auth-panel"><div className="auth-form-wrap"><Link className="back-link" href="/"><ArrowLeft size={15}/> Back to the collection</Link><div className="auth-icon"><LockKeyhole/></div><div className="eyebrow">TEAM ACCESS</div><h2>Welcome<br/><em>back.</em></h2><p className="auth-intro">Sign in to manage the AutoMaster collection and enquiries.</p>{params.error && <div className="notice notice-error">{params.error === "configuration" ? "Set up Supabase using the project README before signing in." : "We couldn't sign you in. Check your details and try again."}</div>}<form action={signIn} className="auth-form"><input type="hidden" name="next" value={params.next ?? "/admin"}/><label>Email address<input autoComplete="email" name="email" type="email" placeholder="you@automaster.co.uk" required/></label><label>Password<input autoComplete="current-password" name="password" type="password" placeholder="Enter your password" required/></label><button className="button button-dark auth-submit" type="submit">Sign in <ArrowUpRight size={16}/></button></form><div className="auth-footnote">Team members only. Need access? Contact your administrator.</div></div></section></main>;
+}
