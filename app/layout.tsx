@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "./globals.css";
 import { Header } from "@/components/header";
 
 export const metadata: Metadata = {
@@ -8,5 +7,22 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><Header />{children}<footer className="footer"><div className="container footer-inner"><a className="brand" href="/">AUTO<span>MASTER</span></a><span>Considered cars. Confident journeys.</span><span>© {new Date().getFullYear()} AutoMaster</span></div></footer></body></html>;
+  return (
+    <html lang="en">
+      <head>
+        <link rel="stylesheet" href="/site.css" />
+      </head>
+      <body>
+        <Header />
+        {children}
+        <footer className="footer">
+          <div className="container footer-inner">
+            <a className="brand" href="/">AUTO<span>MASTER</span></a>
+            <span>Considered cars. Confident journeys.</span>
+            <span>© {new Date().getFullYear()} AutoMaster</span>
+          </div>
+        </footer>
+      </body>
+    </html>
+  );
 }
