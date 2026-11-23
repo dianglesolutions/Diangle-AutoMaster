@@ -16,7 +16,26 @@ export const demoVehicles: Vehicle[] = [
   { id:"demo-6", slug:"tesla-model-3-long-range-2022", make:"Tesla", model:"Model 3 Long Range", year:2022, price:33900, mileage:22500, fuel:"Electric", transmission:"Automatic", body_style:"Saloon", exterior_color:"Pearl White", description:"Long-range electric performance with over-the-air updates, premium connectivity and a minimalist, technology-rich cabin. Includes home charging cable and two key cards.", image_url:null, status:"available", featured:false, created_at:"2026-01-06" },
 ];
 
-export async function getVehicles() {
+
+export async function getVehicles(): Promise<Vehicle[]> {
   const pool = await getSqlPool();
   if (!pool) return demoVehicles;
-  const result = await pool.request().query<Vehicle>("SELECT id, slug, make, model, year, price, mileage, fuel, transmission, body_style, exterior_color, description, image_url, status, featured, CONVERT(varchar(33), created_at, 127) AS created_at FROM dbo.Vehicles WHERE status =
+
+  const result = await pool.request().query<Vehicle>(
+    "SELECT id, slug, make, model, year, price, mileage, fuel, transmission, body_style, exterior_color, description, image_url, status, featured, CONVERT(varchar(33), created_at, 127) AS created_at FROM dbo.Vehicles WHERE status = 'available' ORDER BY featured DESC, created_at DESC"
+  );
+  return result.recordset;
+}
+
+export async function getVehicle(slug: string): Promise<Vehicle | null> {
+  const pool = await getSqlPool();
+  if (!pool) return demoVehicles.find((vehicle) => vehicle.slug === slug) ?? null;
+
+  const result = await pool
+    .request()
+    .input("slug", sql.NVarChar(180), slug)
+    .query<Vehicle>(
+      "SELECT id, slug, make, model, year, price, mileage, fuel, transmission, body_style, exterior_color, description, image_url, status, featured, CONVERT(varchar(33), created_at, 127) AS created_at FROM dbo.Vehicles WHERE slug = @slug AND status = 'available'"
+    );
+  return result.recordset[0] ?? null;
+}
